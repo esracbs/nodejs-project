@@ -1,4 +1,4 @@
-const mongooose= require("mongoose");
+const mongoose= require("mongoose");
 const schema= mongoose.Schema({
     role_name:{type:String,required:true},
     is_active:{type:Boolean,default:true},

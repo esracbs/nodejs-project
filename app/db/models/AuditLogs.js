@@ -1,4 +1,4 @@
-const mongooose= require("mongoose");
+const mongoose= require("mongoose");
 const schema= mongoose.Schema({
     level:String,
     email:String,

@@ -9,13 +9,13 @@ var app = require('../app');
 var debug = require('debug')('app:server');
 var http = require('http');
 const Database =require("../db/Database")
-const { CONNECTION_STRING } =require("../config");
+const { CONNECTION_STRING ,PORT} =require("../config");
 
 /**
  * Get port from environment and store in Express.
  */
 
-var port = normalizePort(process.env.PORT);
+var port = normalizePort(PORT);
 app.set('port', port);
 
 /**
