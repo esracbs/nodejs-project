@@ -3,7 +3,7 @@ const schema= mongoose.Schema({
     level:String,
     email:String,
     proc_type:String,
-    log:String
+    log:mongoose.SchemaTypes.Mixed//herhangi bir tip alabilir.
 },{
     versionKey:false,//otomatik oluşan bir parametre bu ve biz bunun otomatik oluşmasını engelliyoruz
     timestamps:{
