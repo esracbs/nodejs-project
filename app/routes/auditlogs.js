@@ -10,7 +10,7 @@ router.all("*",auth.authenticate(),(req,res,next)=>{//*dedim yani auditlogs ile 
   next();
 });
 
-router.post('/', async(req, res, next) =>{
+router.post('/', auth.checkRoles("auditlogs_view"),async(req, res, next) =>{//auditlogs_view yetkisine sahip olan kullanıcılar sadece bu metoda istek atabilecek
   try {
     let body=req.body;
     let query={};
@@ -40,7 +40,7 @@ router.post('/', async(req, res, next) =>{
     res.json(Response.successResponse(auditlogs));
   } catch (err) {
     
-        let errorResponse = Response.errorResponse(err);
+        let errorResponse = Response.errorResponse(err,req.user?.language);
         res.status(errorResponse.code).json(errorResponse);
   }
 });

@@ -19,7 +19,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use((req,res,next)=>{
-  console.log("ben app.jsde tanımlanan bir middleware'im");
+  // console.log("ben app.jsde tanımlanan bir middleware'im");
   next();
 })
 //üst ve alt satırlarda görüldüğü gibi app.use bir endpoint almayabilir(üst satır.) eğer almıyorsa bu middleware tüm requestlerde geçerli.

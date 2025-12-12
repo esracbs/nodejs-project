@@ -7,13 +7,15 @@ const CustomError=require("../lib/Error");
 const AuditLogs = require("../lib/AuditLogs");
 const Enum=require("../config/Enum");
 const logger=require("../lib/logger/LoggerClass");
+const config = require('../config');
+const i18n = new (require("../lib/i18n"))(config.DEFAULT_LANG);
 
 const auth=require("../lib/auth")();
 
 router.all("*",auth.authenticate(),(req,res,next)=>{//*dedim yani auditlogs ile başlayan tüm endpointlerde çalışmasını istiyorum.
   next();
 });
-router.get('/', async(req, res, next) =>{
+router.get('/', auth.checkRoles("category_view"),async(req, res, next) =>{
   try {
     let categories=await Categories.find({});
     res.json(Response.successResponse(categories));
@@ -23,12 +25,11 @@ router.get('/', async(req, res, next) =>{
     res.status(errorResponse.code).json(Response.errorResponse(err))
   }
 });
-router.post("/add",async(req,res)=>{
+router.post("/add",auth.checkRoles("category_add"),async(req,res)=>{
     let body=req.body;
     try {
-        if(!body.name){
-            throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST,"Validation Error!","İsim alanı doldurulmalıdır!");
-        }
+        if (!body.name) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language), i18n.translate("COMMON.FIELD_MUST_BE_FILLED", req.user.language, ["name"]));
+
         let category= new Categories({
             name:body.name,
             is_active:true,
@@ -44,12 +45,11 @@ router.post("/add",async(req,res)=>{
         res.status(errorResponse.code).json(errorResponse);
     }
 });
-router.post("/update",async(req,res)=>{
+router.post("/update",auth.checkRoles("category_update"),async(req,res)=>{
     let body=req.body;
     try {
-        if(!body._id){
-            throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST,"Validation Error!","Id alanı doldurulmalıdır!");
-        }
+        if (!body._id) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language), i18n.translate("COMMON.FIELD_MUST_BE_FILLED", req.user.language, ["_id"]));
+
         let updates={};
         if(body.name) updates.name=body.name;
         if(typeof body.is_active==="boolean") updates.is_active=body.is_active;
@@ -63,11 +63,11 @@ router.post("/update",async(req,res)=>{
     }
 });
 
-router.post("/delete", async (req, res) => {
+router.post("/delete",auth.checkRoles("category_delete"), async (req, res) => {
     let body = req.body;
 
     try {
-        if (!body._id) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, "Validation Error!", "Id alanı doldurulmalıdır!");// i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language), i18n.translate("COMMON.FIELD_MUST_BE_FILLED", req.user.language, ["_id"]));
+        if (!body._id) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language), i18n.translate("COMMON.FIELD_MUST_BE_FILLED", req.user.language, ["_id"]));
         await Categories.deleteOne({ _id: body._id });
 
         AuditLogs.info(req.user?.email,"Categories","Delete",{_id:body.id});

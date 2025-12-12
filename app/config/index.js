@@ -6,5 +6,6 @@ module.exports={//bu dosyanın export edilebilir oldupunu belirtiyor
         "SECRET":"123",
         "EXPIRE_TIME":!isNaN(parseInt(process.env.EXPIRE_TIME))?parseInt(process.env.EXPIRE_TIME):24*60*60//86400
         //process env ile aldığımız her şey stringtir. bu nedenle bunu sayıya çevirdik.isnan ile çevirdiğimiz şey gerçekten sayıya dönüştü mü eğer sayı ise kullanıcaz değilse biz saniye cinsine denk gelecek şekilde 1 gün verdik.
-    }
+    },
+    "DEFAULT_LANG": process.env.DEFAULT_LANG || "EN"
 }

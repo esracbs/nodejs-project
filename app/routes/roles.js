@@ -8,13 +8,15 @@ const CustomError=require("../lib/Error");
 const Enum=require("../config/Enum");
 const role_privileges=require("../config/role_privileges");
 const UserRoles = require('../db/models/UserRoles');
+const config = require("../config");
+const i18n = new (require("../lib/i18n"))(config.DEFAULT_LANG);
 
 const auth=require("../lib/auth")();
 
 router.all("*",auth.authenticate(),(req,res,next)=>{//*dedim yani auditlogs ile başlayan tüm endpointlerde çalışmasını istiyorum.
   next();
 });
-router.get('/', async(req, res) =>{
+router.get('/', auth.checkRoles("role_view"),async(req, res) =>{
   try {
     let roles=await Roles.find({});
     res.json(Response.successResponse(roles));
@@ -25,14 +27,14 @@ router.get('/', async(req, res) =>{
   }
 });
 
-router.post("/add",async(req,res)=>{
+router.post("/add",auth.checkRoles("role_add"),async(req,res)=>{
     let body=req.body;
     try {
         if(!body.role_name){
-            throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST,"Validation Error!","Rol adı alanı doldurulmalıdır!");
+            throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language),i18n.translate("COMMON.FIELD_MUST_BE_FILLED", req.user.language, ["role_name"]));
         }
         if(!body.permissions||!Array.isArray(body.permissions)||body.permissions.length===0){
-            throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST,"Validation Error!","Yetkiler doldurulmalıdır!");
+            throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language),i18n.translate("COMMON.FIELD_MUST_BE_TYPE", req.user.language, ["permissions", "Array"]));
         }
         let role= new Roles({
             role_name:body.role_name,
@@ -54,11 +56,11 @@ router.post("/add",async(req,res)=>{
         res.status(errorResponse.code).json(errorResponse);
     }
 });
-router.post("/update",async(req,res)=>{
+router.post("/update",auth.checkRoles("role_update"),async(req,res)=>{
     let body=req.body;
     try {
         if(!body._id){
-            throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST,"Validation Error!","Id alanı doldurulmalıdır!");
+           throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language),i18n.translate("COMMON.FIELD_MUST_BE_FILLED", req.user.language, ["_id"]));
         }
         let updates={};
         if(body.role_name) updates.role_name=body.role_name;
@@ -79,8 +81,8 @@ router.post("/update",async(req,res)=>{
             if(newPermissions.length>0){
                 for (let i = 0; i < newPermissions.length; i++) {
                     let userRole=new RolePrivileges({
-                        role_id:body.role_id,
-                        user_id:newPermissions[i],
+                        role_id:body._id,
+                        permission:newPermissions[i],
                         created_by:req.user?.id
                     });
                     await userRole.save();
@@ -93,16 +95,17 @@ router.post("/update",async(req,res)=>{
         res.json(Response.successResponse({success:true}));
     } catch (err) {
         let errorResponse=Response.errorResponse(err);
+        console.log(err)
         res.status(errorResponse.code).json(errorResponse);
         
     }
 });
 
-router.post("/delete", async (req, res) => {
+router.post("/delete", auth.checkRoles("role_delete"),async (req, res) => {
     let body = req.body;
 //rolü silerken privilegesini de silmemiz gerekiyor bunu model/roles.js de yaptık
     try {
-        if (!body._id) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST,"","Id alanı doldurulmalıdır!" );//)i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language), i18n.translate("COMMON.FIELD_MUST_BE_FILLED", req.user.language, ["_id"]));
+        if (!body._id)throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language),i18n.translate("COMMON.FIELD_MUST_BE_FILLED", req.user.language, ["_id"]));
         await Roles.deleteOne({ _id: body._id });
         await UserRoles.deleteMany({ user_id: body._id });
         res.json(Response.successResponse({ success: true }));

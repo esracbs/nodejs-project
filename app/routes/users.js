@@ -10,6 +10,7 @@ var router = express.Router();
 const is = require("is_js");
 const jwt = require("jwt-simple");
 const config = require('../config');
+const i18n = new (require("../lib/i18n"))(config.DEFAULT_LANG);
 
 
 const auth=require("../lib/auth")();
@@ -23,9 +24,9 @@ router.post("/auth", async (req, res) => {
 
     let user = await Users.findOne({ email });
 
-    if (!user) throw new CustomError(Enum.HTTP_CODES.UNAUTHORIZED, "Validation Error!", "Parola veya sifre yanlis");//i18n.translate("COMMON.VALIDATION_ERROR_TITLE", config.DEFAULT_LANG), i18n.translate("USERS.AUTH_ERROR", config.DEFAULT_LANG));
+    if (!user) throw new CustomError(Enum.HTTP_CODES.UNAUTHORIZED, i18n.translate("COMMON.VALIDATION_ERROR_TITLE", config.DEFAULT_LANG), i18n.translate("USERS.AUTH_ERROR", config.DEFAULT_LANG));
 
-    if (!user.validPassword(password)) throw new CustomError(Enum.HTTP_CODES.UNAUTHORIZED, "Validation Error!", "Parola veya sifre yanlis");//i18n.translate("COMMON.VALIDATION_ERROR_TITLE", config.DEFAULT_LANG), i18n.translate("USERS.AUTH_ERROR", config.DEFAULT_LANG));
+    if (!user.validPassword(password)) throw new CustomError(Enum.HTTP_CODES.UNAUTHORIZED, i18n.translate("COMMON.VALIDATION_ERROR_TITLE", config.DEFAULT_LANG), i18n.translate("USERS.AUTH_ERROR", config.DEFAULT_LANG));
 
     let payload = {//tokenin içinde bulunan verileri oluşturuyoruz belirliyoruz
       id: user._id,
@@ -47,7 +48,7 @@ router.post("/auth", async (req, res) => {
     res.status(errorResponse.code).json(errorResponse);
   }
 })
-router.post("/register", async (req, res) => {// auth.checkRoles("user_add"), 
+router.post("/register", async (req, res) => { 
   let body = req.body;
   try {
     let user = await Users.findOne({ email: body.email });
@@ -56,13 +57,13 @@ router.post("/register", async (req, res) => {// auth.checkRoles("user_add"),
     }
     // if (!body.email) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language), i18n.translate("COMMON.FIELD_MUST_BE_FILLED", req.user.language, ["email"]));
 
-    if (is.not.email(body.email)) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, "Validation Error!", "Email formatı yanlış!");// i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language), i18n.translate("USERS.EMAIL_FORMAT_ERROR", req.user.language));
+    if (is.not.email(body.email)) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST,  i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language), i18n.translate("USERS.EMAIL_FORMAT_ERROR", req.user.language));
     //is paketini indirdik bunu indirerek format kontrolü sağlamış olduk
 
-    if (!body.password) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, "Validation Error!", "Sifre alanı doldurulmalıdır");//i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language), i18n.translate("COMMON.FIELD_MUST_BE_FILLED", req.user.language, ["password"]));
+    if (!body.password) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST,i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language), i18n.translate("COMMON.FIELD_MUST_BE_FILLED", req.user.language, ["password"]));
 
     if (body.password.length < Enum.PASS_LENGTH) {
-      throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, "Validation Error!", "Sifre en az 8 karakter olmalıdır");//i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language), i18n.translate("USERS.PASSWORD_LENGTH_ERROR", req.user.language, [Enum.PASS_LENGTH]));
+      throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language), i18n.translate("USERS.PASSWORD_LENGTH_ERROR", req.user.language, [Enum.PASS_LENGTH]));
     }
 
     // if (!body.roles || !Array.isArray(body.roles) || body.roles.length == 0) {
@@ -111,7 +112,7 @@ router.all("*",auth.authenticate(),(req,res,next)=>{//*dedim yani auditlogs ile 
   next();
 });
 /* GET users listing. */
-router.get('/', async (req, res, next) => {
+router.get('/', auth.checkRoles("user_view"),async (req, res, next) => {
   try {
     let users = await Users.find({});
     res.json(Response.successResponse(users));
@@ -122,29 +123,29 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-router.post("/add", async (req, res) => {// auth.checkRoles("user_add"), 
+router.post("/add", auth.checkRoles("user_add"),async (req, res) => { 
   let body = req.body;
   try {
 
     if (!body.email) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language), i18n.translate("COMMON.FIELD_MUST_BE_FILLED", req.user.language, ["email"]));
 
-    if (is.not.email(body.email)) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, "Validation Error!", "Email formatı yanlış!");// i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language), i18n.translate("USERS.EMAIL_FORMAT_ERROR", req.user.language));
+    if (is.not.email(body.email)) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST,  i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language), i18n.translate("USERS.EMAIL_FORMAT_ERROR", req.user.language));
     //is paketini indirdik bunu indirerek format kontrolü sağlamış olduk
 
-    if (!body.password) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, "Validation Error!", "Sifre alanı doldurulmalıdır");//i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language), i18n.translate("COMMON.FIELD_MUST_BE_FILLED", req.user.language, ["password"]));
+    if (!body.password) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST,i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language), i18n.translate("COMMON.FIELD_MUST_BE_FILLED", req.user.language, ["password"]));
 
     if (body.password.length < Enum.PASS_LENGTH) {
-      throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, "Validation Error!", "Sifre en az 8 karakter olmalıdır");//i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language), i18n.translate("USERS.PASSWORD_LENGTH_ERROR", req.user.language, [Enum.PASS_LENGTH]));
+      throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language), i18n.translate("USERS.PASSWORD_LENGTH_ERROR", req.user.language, [Enum.PASS_LENGTH]));
     }
 
     if (!body.roles || !Array.isArray(body.roles) || body.roles.length == 0) {
-      throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, "Validation Error!", "Roller alanı bir array olmalıdır.");//i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language), i18n.translate("COMMON.FIELD_MUST_BE_TYPE", req.user.language, ["roles", "Array"]));
+      throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language), i18n.translate("COMMON.FIELD_MUST_BE_TYPE", req.user.language, ["roles", "Array"]));
     }
     //bu roller aslında id dizisi olacak.rol tablosundaki idleri barındıracak. gerçekten idlere ait kayıtlar var mı diye kontrol etmemiz gerekiyor
     let roles = await Roles.find({ _id: { $in: body.roles } });//idsi .. olanlar diyeceksek in kullanıyoruz
 
     if (roles.length == 0) {
-      throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, "validation Error!", "Roller alanı bir array olmalıdır");// i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language), i18n.translate("COMMON.FIELD_MUST_BE_TYPE", req.user.language, ["roles", "Array"]));
+      throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language), i18n.translate("COMMON.FIELD_MUST_BE_TYPE", req.user.language, ["roles", "Array"]));
     }
 
     let password = bcrypt.hashSync(body.password, bcrypt.genSaltSync(8), null);//8 girdik ne kadar büyük girersek okadar sağlam hashlaneir
@@ -172,12 +173,12 @@ router.post("/add", async (req, res) => {// auth.checkRoles("user_add"),
     res.status(errorResponse.code).json(errorResponse);
   }
 });
-router.post("/update", async (req, res) => {
+router.post("/update", auth.checkRoles("user_update"),async (req, res) => {
   try {
     let body = req.body;
     let updates = {};
     if (!body._id) {
-      throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, "Validation Error!", "Id alanı doldurulmalıdır!");
+      throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language), i18n.translate("COMMON.FIELD_MUST_BE_FILLED", req.user.language, ["_id"]));
     }
     if (body.password && body.password.length > Enum.PASS_LENGTH) {
       updates.password = bcrypt.hashSync(body.password, bcrypt.genSaltSync(8), null);
@@ -214,10 +215,10 @@ router.post("/update", async (req, res) => {
 
   }
 })
-router.post("/delete", async (req, res) => {
+router.post("/delete",auth.checkRoles("user_delete"), async (req, res) => {
   let body = req.body;
   try {
-    if (!body._id) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, "Validation Error!", "Id alanı doldurulmalıdır!");
+    if (!body._id) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language), i18n.translate("COMMON.FIELD_MUST_BE_FILLED", req.user.language, ["_id"]));;
     await Users.deleteOne({ _id: body._id });
 
     res.json(Response.successResponse({ success: true }));
