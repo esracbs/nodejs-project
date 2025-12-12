@@ -18,9 +18,14 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
-
+app.use((req,res,next)=>{
+  console.log("ben app.jsde tanımlanan bir middleware'im");
+  next();
+})
+//üst ve alt satırlarda görüldüğü gibi app.use bir endpoint almayabilir(üst satır.) eğer almıyorsa bu middleware tüm requestlerde geçerli.
+//eğer alıyorsa(alt satır) sadece ilk parametredeki enpointe gelen isteklerde geçerli olacak demek oluyor.
 app.use('/api', require('./routes/index'));
-
+//bazı endpointleri authentication ile korumak isterken bazılarına gerek duymayız
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   next(createError(404));

@@ -8,6 +8,11 @@ const AuditLogs = require("../lib/AuditLogs");
 const Enum=require("../config/Enum");
 const logger=require("../lib/logger/LoggerClass");
 
+const auth=require("../lib/auth")();
+
+router.all("*",auth.authenticate(),(req,res,next)=>{//*dedim yani auditlogs ile başlayan tüm endpointlerde çalışmasını istiyorum.
+  next();
+});
 router.get('/', async(req, res, next) =>{
   try {
     let categories=await Categories.find({});
@@ -62,7 +67,7 @@ router.post("/delete", async (req, res) => {
     let body = req.body;
 
     try {
-        if (!body._id) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language), i18n.translate("COMMON.FIELD_MUST_BE_FILLED", req.user.language, ["_id"]));
+        if (!body._id) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, "Validation Error!", "Id alanı doldurulmalıdır!");// i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language), i18n.translate("COMMON.FIELD_MUST_BE_FILLED", req.user.language, ["_id"]));
         await Categories.deleteOne({ _id: body._id });
 
         AuditLogs.info(req.user?.email,"Categories","Delete",{_id:body.id});

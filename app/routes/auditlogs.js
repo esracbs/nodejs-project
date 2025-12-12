@@ -4,6 +4,11 @@ const moment=require("moment");//moment modülü tarih işlemlerini kolaylaştı
 const CustomError=require("../lib/Error");
 const AuditLogs=require("../db/models/AuditLogs")
 var router = express.Router();
+const auth=require("../lib/auth")();
+
+router.all("*",auth.authenticate(),(req,res,next)=>{//*dedim yani auditlogs ile başlayan tüm endpointlerde çalışmasını istiyorum.
+  next();
+});
 
 router.post('/', async(req, res, next) =>{
   try {
@@ -11,10 +16,10 @@ router.post('/', async(req, res, next) =>{
     let query={};
     let skip=body.skip;
     let limit=body.limit;
-    if(typeof body.skip !=="numeric"){
+    if(typeof body.skip !=="number"){
       skip=0;
     }
-    if(typeof body.limit !=="numeric"||body.limit>500){
+    if(typeof body.limit !=="number"||body.limit>500){
       limit=500;
     }
     if(body.begin_date && body.end_date){

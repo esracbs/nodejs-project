@@ -9,6 +9,11 @@ const Enum=require("../config/Enum");
 const role_privileges=require("../config/role_privileges");
 const UserRoles = require('../db/models/UserRoles');
 
+const auth=require("../lib/auth")();
+
+router.all("*",auth.authenticate(),(req,res,next)=>{//*dedim yani auditlogs ile başlayan tüm endpointlerde çalışmasını istiyorum.
+  next();
+});
 router.get('/', async(req, res) =>{
   try {
     let roles=await Roles.find({});
@@ -74,7 +79,7 @@ router.post("/update",async(req,res)=>{
             if(newPermissions.length>0){
                 for (let i = 0; i < newPermissions.length; i++) {
                     let userRole=new RolePrivileges({
-                        role_id:newRoles.role_id,
+                        role_id:body.role_id,
                         user_id:newPermissions[i],
                         created_by:req.user?.id
                     });
@@ -97,7 +102,7 @@ router.post("/delete", async (req, res) => {
     let body = req.body;
 //rolü silerken privilegesini de silmemiz gerekiyor bunu model/roles.js de yaptık
     try {
-        if (!body._id) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST, i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language), i18n.translate("COMMON.FIELD_MUST_BE_FILLED", req.user.language, ["_id"]));
+        if (!body._id) throw new CustomError(Enum.HTTP_CODES.BAD_REQUEST,"","Id alanı doldurulmalıdır!" );//)i18n.translate("COMMON.VALIDATION_ERROR_TITLE", req.user.language), i18n.translate("COMMON.FIELD_MUST_BE_FILLED", req.user.language, ["_id"]));
         await Roles.deleteOne({ _id: body._id });
         await UserRoles.deleteMany({ user_id: body._id });
         res.json(Response.successResponse({ success: true }));
